@@ -113,15 +113,19 @@ class PermissionedTokenPrototype extends React.Component {
         switch (obj.data.out[0].s4) {
           case '0':
             // Genesis
+            this.setState({ monitoredGenesis: [...this.state.monitoredSpends, obj.data]});
             break;
           case '1':
             // Block
+            this.setState({ monitoredBlocks: [...this.state.monitoredSpends, obj.data]});
             break;
           case '2':
             // Coinbase
+            this.setState({ monitoredCoinbase: [...this.state.monitoredSpends, obj.data]});
             break;
           case '3':
             // Spend
+            this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data]});
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
