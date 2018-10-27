@@ -30,16 +30,18 @@ ptp.prototype.createGenesis = async (tokenId, toAddress, ticker, name, coinbaseA
   let blockUtxo = null;
 
   let retries = 0;
+  let allUtxo = null;
   while (!(coinbaseUtxo && blockUtxo) && retries < 5) {
     console.log('awaiting incoming payment');
     await sleep(1000);
-    let allUtxo = await BITBOX.Address.utxo(toAddress);
+    allUtxo = await BITBOX.Address.utxo(toAddress);
     coinbaseUtxo = allUtxo.find(output => output.vout == 0);
     blockUtxo = allUtxo.find(output => output.vout == 1);
     retries++;
   }
 
   if(!(coinbaseUtxo && blockUtxo)) {
+    console.log(allUtxo);
     throw new Error('Error querying the blockchain');
   }
   

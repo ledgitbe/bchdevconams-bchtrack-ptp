@@ -70,9 +70,6 @@ class PermissionedTokenPrototype extends React.Component {
     this.setState({toEcPair});
     this.setState({toAddress});
 
-
-    //Remove this later, this needs to be on callback from genesis moneybutton
-    this.startMonitoring();
   }
 
   componentWillUnmount() {
@@ -108,20 +105,21 @@ class PermissionedTokenPrototype extends React.Component {
       }
 
       var obj = JSON.parse(e.data);
+      console.log(obj);
 
       if(obj.data && obj.data.length > 0 && obj.data[0].out && obj.data[0].out.length > 0) {
-        switch (obj.data.out[0].s4) {
+        switch (obj.data[0].out[0].s2) {
           case '0':
             // Genesis
-            this.setState({ monitoredGenesis: [...this.state.monitoredSpends, obj.data]});
+            this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data]});
             break;
           case '1':
             // Block
-            this.setState({ monitoredBlocks: [...this.state.monitoredSpends, obj.data]});
+            this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data]});
             break;
           case '2':
             // Coinbase
-            this.setState({ monitoredCoinbase: [...this.state.monitoredSpends, obj.data]});
+            this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data]});
             break;
           case '3':
             // Spend
@@ -130,7 +128,7 @@ class PermissionedTokenPrototype extends React.Component {
           default:
             this.addLogMessage("Unknown transaction type detected");
             break;
-          }
+        }
         console.log("Received block " + Buffer.from(obj.data[0].out[0].h4, 'hex') + " with id " + obj.data[0].tx.h);
         try {
           console.log('Coinbase transaction: ' + Buffer.from(obj.data[0].out[0].h6,'hex').toString());
@@ -166,6 +164,7 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   async createGenesis() {
+    this.startMonitoring();
     try {
       ptp.createGenesis(this.state.tokenId, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.toEcPair)
     } catch (e) {
@@ -183,12 +182,13 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   renderSpend() {
+    console.log(this.state.monitoredCoinbase);
     return (
       <Card title="Wallet">
         <List
           size="small"
           bordered
-          dataSource={this.state.logs.filter(item => { return item.data && item.data.out && item.data.out.length>1 && item.data.out[1].e && item.data.out[1].e.a && this.normalizeAddress(item.data.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
+          dataSource={this.state.monitoredCoinbase.filter(item => { return item.out && item.out.length>1 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
           renderItem={item => (<List.Item>{item}</List.Item>)}
         />
       </Card>
