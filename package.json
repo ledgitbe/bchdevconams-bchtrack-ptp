@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "bitbox-sdk": "^2.1.0",
+    "@moneybutton/react-money-button": "^0.1.3",
+    "antd": "^3.10.3",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "react-scripts": "2.0.5"
