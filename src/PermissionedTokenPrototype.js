@@ -132,26 +132,35 @@ class PermissionedTokenPrototype extends React.Component {
             // Genesis
             this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data[0]]});
             this.addLogMessage("Received genesis transaction");
+            this.addLogMessage("Tx: " + obj.data[0].tx.h);
             break;
           case '1':
             // Block
             this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
+            this.addLogMessage("Received block transaction");
+            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+
             var index = 6;
             while(obj.data[0].out[0][`s${index}`]) {
               this.setState({ confirmedTransactionIds: [...this.state.confirmedTransactionIds, obj.data[0].out[0][`s${index}`]]});
+              this.addLogMessage("Confirmed transaction: " + obj.data[0].out[0][`s${index}`]);
               index++;
             }
-            this.addLogMessage("Received block transaction");
             break;
           case '2':
             // Coinbase
             this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data[0]]});
             this.addLogMessage("Received coinbase transaction");
+            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Added supply: " + obj.data[0].out[0].s4);
             break;
           case '3':
             // Spend
             this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
             this.addLogMessage("Received spend transaction");
+            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Amount: " + obj.data[0].out[0].s4 + " " + this.state.ticker);
+            this.addLogMessage("To: " + obj.data[0].out[1].e.a);
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
@@ -169,7 +178,7 @@ class PermissionedTokenPrototype extends React.Component {
       }
 
       console.log(e);
-      this.setState({ logs: [...this.state.logs, e.data]});
+      //this.setState({ logs: [...this.state.logs, e.data]});
     };
   }
 
@@ -298,7 +307,9 @@ class PermissionedTokenPrototype extends React.Component {
         <List
           size="small"
           bordered
-          dataSource={transactions.filter(item => { return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
+          dataSource={transactions.filter(item => { 
+            return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)
+          })}
           renderItem={item => {
             var cannotSpend = 
               this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h) 
