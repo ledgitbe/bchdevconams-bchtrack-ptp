@@ -1,4 +1,4 @@
-const BITBOXSDK = require('./node_modules/bitbox-sdk/lib/bitbox-sdk').default;
+const BITBOXSDK = require('bitbox-sdk/lib/bitbox-sdk').default;
 const BITBOX = new BITBOXSDK();
 
 const test = true;
@@ -16,7 +16,7 @@ function sleep(ms) {
 
 
 const checkInputUtxos = async (inputUtxos) => {
-  if (inputUtxos.length < 1) {
+  if (!inputUtxos || inputUtxos.length < 1) {
     throw Error('inputUtxos must contain at least 1 input');
   } else {
     return true;
@@ -29,9 +29,13 @@ ptp.prototype.createGenesis = async (tokenId, fundingAddress, toAddress, ticker,
   // spend inputUtxos to 2 utxo's (vout[0] = genesis tx, vout[1] = coinbase tx)
   let transactionBuilder = new BITBOX.TransactionBuilder('bitcoincash');
 
-  const inputUtxos = await BITBOX.Address.utxo(fundingAddress);
+  let inputUtxos = await BITBOX.Address.utxo(fundingAddress);
 
-  checkInputUtxos();
+  while (!inputUtxos || inputUtxos.length < 1) {
+    console.log('waiting for input transaction');
+    sleep(5000);
+    inputUtxos = await BITBOX.Address.utxo(fundingAddress);
+  }
 
   let satoshis = 0;
   for (let i = 0; i < inputUtxos.length; i += 1) {
@@ -79,7 +83,7 @@ ptp.prototype.createGenesis = async (tokenId, fundingAddress, toAddress, ticker,
   let coinbaseTxId = await ptp.prototype.createTransaction(tokenId, [coinbaseUtxo], true, [coinbaseAddress], [initialSupply], toEcPair);
   // use output 2 from inputTx to create genesis tx
   // attach coinbaseTx as coinbase
-  return await ptp.prototype.createBlock(tokenId, [blockUtxo], toAddress, 0, coinbaseTxId, [], toEcPair, isGenesis);
+  return await ptp.prototype.createBlock(tokenId, [blockUtxo], toAddress, 0, coinbaseTxId, [], toEcPair, true);
 };
 // inputUtxo = spends this utxo
 // isCoinbase = boolean indicating coinbase tx
@@ -151,7 +155,7 @@ ptp.prototype.createBlock = async (tokenId, inputUtxos, outputAddress, height, c
     satoshis += inputUtxos[i].satoshis;
     transactionBuilder.addInput(inputUtxos[i].txid, inputUtxos[i].vout);
   }
-  let scriptArray = [BITBOX.Script.opcodes.OP_RETURN, prefixi];
+  let scriptArray = [BITBOX.Script.opcodes.OP_RETURN, prefix];
   if(isGenesis) {
     scriptArray.push(transactionTypes["genesis"].toString());
   } else {
@@ -189,4 +193,4 @@ ptp.prototype.createBlock = async (tokenId, inputUtxos, outputAddress, height, c
 
 };
 
-module.exports = new ptp();
+export default ptp;

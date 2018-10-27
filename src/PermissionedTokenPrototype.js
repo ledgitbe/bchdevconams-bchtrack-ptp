@@ -3,6 +3,9 @@ import { Input, Card } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
+import ptpSdk from './ptp';
+
+const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
 //
@@ -29,6 +32,7 @@ class PermissionedTokenPrototype extends React.Component {
     fundingEcPair: null,
     toEcPair: null,
     mnemonic: null,
+    genesisTxId: null,
   }
 
   componentWillMount() {
@@ -57,7 +61,7 @@ class PermissionedTokenPrototype extends React.Component {
 
     this.setState({fundingEcPair});
     this.setState({fundingAddress});
-    
+
     let coinbaseHdNode = BITBOX.HDNode.deriveHardened(hdNode, 1);
     let coinbaseAddress = BITBOX.HDNode.toCashAddress(coinbaseHdNode);
 
@@ -66,7 +70,7 @@ class PermissionedTokenPrototype extends React.Component {
     let toHdNode = BITBOX.HDNode.deriveHardened(hdNode, 2);
     let toAddress = BITBOX.HDNode.toCashAddress(toHdNode);
     let toEcPair = BITBOX.HDNode.toKeyPair(toHdNode);
-    
+
     this.setState({toEcPair});
     this.setState({toAddress});
   }
@@ -75,7 +79,7 @@ class PermissionedTokenPrototype extends React.Component {
     this.bitsocket.close();
   }
 
- handleChange(e) {
+  handleChange(e) {
     this.setState({ [e.target.name] : e.target.value});
     console.log("Genesis State", this.state);
   }
@@ -83,18 +87,27 @@ class PermissionedTokenPrototype extends React.Component {
   renderGenesis() {
     return (
       <Card title="Genesis">
-      <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
-      <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
-      <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
-      <Input onChange={this.handleChange.bind(this)} name="coinbaseAddr"  placeholder="coinbaseAddr" />
-      <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
-      <MoneyButton
-        to={this.state.fundingAddress}
-        amount="0.01"
-        currency="EUR"
-      />
-    </Card>
+        <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
+        <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
+        <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
+        <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
+        <MoneyButton
+          to={this.state.fundingAddress}
+          amount="0.05"
+          currency="EUR"
+          onPayment={this.createGenesis.bind(this)}
+        />
+      </Card>
     );
+  }
+
+  async createGenesis() {
+    try {
+      ptp.createGenesis(this.state.tokenId, this.state.fundingAddress, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.fundingEcPair, this.state.toEcPair)
+    } catch (e) {
+      console.log(e);
+    }
+    return true;
   }
 
   renderValidation() {
@@ -115,7 +128,7 @@ class PermissionedTokenPrototype extends React.Component {
         { this.renderSpend() }
         { this.renderMonitor() }
       </div>
-   );
+    );
   }
 
 
