@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Card, List, Transfer, Popover, Button } from 'antd';
+import { Input, Card, List, Transfer, Popover, Button, Row, Col } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -8,7 +8,12 @@ import ptpSdk from './ptp';
 const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
-//
+
+const styles = {
+  card: { wordBreak: 'break-all', margin: 8, boxShadow: '0px 7px 30px -16px rgba(0,0,0,0.65)' },
+};
+
+
 //*  tokenid
 //*  ticker
 //*  name
@@ -27,6 +32,7 @@ const BITBOX = new BITBOXSDK();
 //      };
 //
 //      content=<SpendComponent txId={2}  />
+
 
 class PermissionedTokenPrototype extends React.Component {
   state = {
@@ -47,6 +53,7 @@ class PermissionedTokenPrototype extends React.Component {
     monitoredSpends: [],
     selectedKeys: [],
     targetKeys: [],
+    spentTransactionIds: [],
   }
   monitorSocket = null;
 
@@ -168,7 +175,7 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderGenesis() {
     return (
-      <Card title="Genesis">
+      <Card style={styles.card} title="Genesis">
         <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
         <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
         <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
@@ -198,22 +205,18 @@ class PermissionedTokenPrototype extends React.Component {
 
   handleTransferChange(nextTargetKeys, direction, moveKeys) {
     this.setState({ targetKeys: nextTargetKeys });
-
-    console.log('targetKeys: ', nextTargetKeys);
-    console.log('direction: ', direction);
-    console.log('moveKeys: ', moveKeys);
   }
 
   renderValidation() {
     return (
-      <Card title="Validation">
+      <Card style={styles.card} title="Validation">
         <Transfer
           titles={['Unvalidated', 'Validated']}
           targetKeys={this.state.targetKeys}
           selectedKeys={this.state.selectedKeys}
           dataSource={this.state.monitoredSpends}
           rowKey={record => record.tx.h}
-          render={item => item.text}
+          render={item => item.tx.h}
           onSelectChange={this.handleTransferSelectChange.bind(this)}
           onChange={this.handleTransferChange.bind(this)}
         />
@@ -221,29 +224,37 @@ class PermissionedTokenPrototype extends React.Component {
     );
   }
 
+  async spendTransaction(txid) {
+    var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
+
+    var transaction = transactions.find(tx => tx.tx.h===txid);
+    const utxo = await BITBOX.Address.utxo(this.state.coinbaseAddress);
+    const output = utxo.find(output => {return output.txid === txid});
+    if (output && transaction) {
+      ptp.createTransaction(this.state.tokenId, [output], false, [this.state.coinbaseAddress], [transaction.out[0].s4], this.state.coinbaseEcPair);
+      this.setState({ spentTransactionIds: [...this.state.spentTransactionIds, txid]});
+      // disable button
+    } else {
+      console.log('No output found with txid ' + txid);
+      console.log(utxo);
+    }
+  }
   renderSpend() {
-    function SpendPopover(props) {
+    const SpendPopover = (props) => {
       return (
         <div>
           {props.txid} 
-          <Button onClick={async () => {
-            const utxo = await BITBOX.Address.utxo(props.coinbaseAddress);
-            const output = utxo.find(output => {return output.txid === props.txid});
-            if (output) {
-              ptp.createTransaction(props.tokenId, [output], false, [props.coinbaseAddress], [props.amount], props.coinbaseEcPair)
-            } else {
-              console.log('No output found with txid ' + props.txid);
-              console.log(utxo);
-            }
+          <Button onClick={() => {
+            this.spendTransaction(props.txid);
           }}>
           Spend entire output
           </Button>
         </div>);
     }
-
+    
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
     return (
-      <Card title="Wallet">
+      <Card style={styles.card} title="Wallet">
         <List
           size="small"
           bordered
@@ -251,8 +262,8 @@ class PermissionedTokenPrototype extends React.Component {
           renderItem={item => (
             <List.Item>
               {item.out[0].s4} {this.state.ticker} received 
-              <Popover content={SpendPopover({txid:item.tx.h, amount:item.out[0].s4, tokenId: this.state.tokenId, coinbaseAddress: this.state.coinbaseAddress, coinbaseEcPair: this.state.coinbaseEcPair})} title="Spend Output" trigger="click">
-                <Button>Spend this output</Button>
+              <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
+                <Button disabled={this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h)}>Spend this output</Button>
               </Popover>
             </List.Item>)}
           />
@@ -271,7 +282,7 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderMonitor() {
     return (
-      <Card title="Monitor">
+      <Card style={styles.card} title="Monitor">
         <List
           size="small"
           bordered
@@ -286,10 +297,14 @@ class PermissionedTokenPrototype extends React.Component {
     console.log(this.state);
     return (
       <div>
-        { this.renderGenesis() }
-        { this.renderValidation() }
-        { this.renderSpend() }
-        { this.renderMonitor() }
+        <Row>
+          <Col xs={24} sm={24} md={6}>{ this.renderGenesis() }</Col>
+          <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>
+          <Col xs={24} sm={24} md={6}>{ this.renderSpend() }</Col>
+        </Row>
+        <Row>
+          <Col xs={24}>{ this.renderMonitor() }</Col>
+        </Row>
       </div>
     );
   }
