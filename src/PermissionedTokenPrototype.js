@@ -111,19 +111,19 @@ class PermissionedTokenPrototype extends React.Component {
         switch (obj.data[0].out[0].s2) {
           case '0':
             // Genesis
-            this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data]});
+            this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data[0]]});
             break;
           case '1':
             // Block
-            this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data]});
+            this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
             break;
           case '2':
             // Coinbase
-            this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data]});
+            this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data[0]]});
             break;
           case '3':
             // Spend
-            this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data]});
+            this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
@@ -189,7 +189,7 @@ class PermissionedTokenPrototype extends React.Component {
           size="small"
           bordered
           dataSource={this.state.monitoredCoinbase.filter(item => { return item.out && item.out.length>1 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
-          renderItem={item => (<List.Item>{item}</List.Item>)}
+          renderItem={item => (<List.Item>{JSON.stringify(item)}</List.Item>)}
         />
       </Card>
     );
