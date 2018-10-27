@@ -20,6 +20,14 @@ const BITBOX = new BITBOXSDK();
 //toAddress
 //
 
+//OBfunction SpendComponent({ txId, blabla}) {
+//  return (
+//    <div>
+//      )
+//      };
+//
+//      content=<SpendComponent txId={2}  />
+
 class PermissionedTokenPrototype extends React.Component {
   state = {
     tokenId: null,
@@ -35,9 +43,15 @@ class PermissionedTokenPrototype extends React.Component {
     monitoredGenesis: [],
     monitoredBlocks: [],
     monitoredCoinbase: [],
-    monitoredSpends: [],
-    unvalidatedSpendsKeys: [],
-    validatedSpendsKeys: [],
+    monitoredSpends: [
+      {id: 1, text: 'one'},
+      {id: 2, text: 'two'},
+      {id: 3, text: 'three'},
+      {id: 4, text: 'four'},
+      {id: 5, text: 'five'},
+    ],
+    selectedKeys: [],
+    targetKeys: [],
   }
   monitorSocket = null;
 
@@ -112,29 +126,36 @@ class PermissionedTokenPrototype extends React.Component {
           case '0':
             // Genesis
             this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data[0]]});
+            this.addLogMessage("Received genesis transaction");
             break;
           case '1':
             // Block
             this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
+            this.addLogMessage("Received block transaction");
             break;
           case '2':
             // Coinbase
             this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data[0]]});
+            this.addLogMessage("Received coinbase transaction");
             break;
           case '3':
             // Spend
             this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
+            this.addLogMessage("Received spend transaction");
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
             break;
         }
+
+        //
         console.log("Received block " + Buffer.from(obj.data[0].out[0].h4, 'hex') + " with id " + obj.data[0].tx.h);
         try {
           console.log('Coinbase transaction: ' + Buffer.from(obj.data[0].out[0].h6,'hex').toString());
         } catch (e) {
           console.log('No coinbase transaction');
         }
+        //
       }
 
       console.log(e);
@@ -173,10 +194,32 @@ class PermissionedTokenPrototype extends React.Component {
     return true;
   }
 
+
+  handleTransferSelectChange(sourceSelectedKeys, targetSelectedKeys) {
+    this.setState({ selectedKeys: [...sourceSelectedKeys, ...targetSelectedKeys] });
+  }
+
+  handleTransferChange(nextTargetKeys, direction, moveKeys) {
+    this.setState({ targetKeys: nextTargetKeys });
+
+    console.log('targetKeys: ', nextTargetKeys);
+    console.log('direction: ', direction);
+    console.log('moveKeys: ', moveKeys);
+  }
+
   renderValidation() {
     return (
       <Card title="Validation">
-        <Transfer />
+        <Transfer
+          titles={['Unvalidated', 'Validated']}
+          targetKeys={this.state.targetKeys}
+          selectedKeys={this.state.selectedKeys}
+          dataSource={this.state.monitoredSpends}
+          rowKey={record => record.id}
+          render={item => item.text}
+          onSelectChange={this.handleTransferSelectChange.bind(this)}unvalidatedSpendsKeys
+          onChange={this.handleTransferChange.bind(this)}
+        />
       </Card>
     );
   }
