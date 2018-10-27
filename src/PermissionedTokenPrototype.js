@@ -52,7 +52,7 @@ class PermissionedTokenPrototype extends React.Component {
     monitoredCoinbase: [],
     monitoredSpends: [],
     selectedKeys: [],
-    targetKeys: [],
+    transactionsToValidate: [],
     spentTransactionIds: [],
     confirmedTransactionIds: [],
   }
@@ -206,8 +206,6 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   async createBlock() {
-    let transactionsToValidate = this.state.targetKeys;
-
     try {
       let allUtxo = await BITBOX.Address.utxo(this.state.toAddress);
       let blockUtxo = allUtxo.find(utxo => utxo.txid === this.state.lastBlockTxId);
@@ -217,11 +215,12 @@ class PermissionedTokenPrototype extends React.Component {
         this.state.toAddress,
         0,
         0,
-        transactionsToValidate,
+        this.state.transactionsToValidate,
         this.state.toEcPair,
         false);
         this.setState({lastBlockTxId});
       } else {
+        console.log(this.state.lastBlockTxId);
         console.log('Utxo not found in createBlock()');
         console.log(allUtxo);
       }
@@ -235,7 +234,7 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   handleTransferChange(nextTargetKeys, direction, moveKeys) {
-    this.setState({ targetKeys: nextTargetKeys });
+    this.setState({ transactionsToValidate: nextTargetKeys });
   }
 
   renderValidation() {
@@ -243,7 +242,7 @@ class PermissionedTokenPrototype extends React.Component {
       <Card style={styles.card} title="Validation">
         <Transfer
           titles={['Unvalidated', 'Validated']}
-          targetKeys={this.state.targetKeys}
+          targetKeys={this.state.transactionsToValidate}
           selectedKeys={this.state.selectedKeys}
           dataSource={this.state.monitoredSpends.filter(spend => this.state.confirmedTransactionIds.indexOf(spend.tx.h)===-1)}
           rowKey={record => record.tx.h}
