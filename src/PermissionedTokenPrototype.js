@@ -198,6 +198,7 @@ class PermissionedTokenPrototype extends React.Component {
         <MoneyButton
           outputs={[{address:this.state.toAddress,amount:0.05,currency:'EUR'},{address:this.state.toAddress,amount:0.03,currency:'EUR'}]}
           onPayment={this.createGenesis.bind(this)}
+          type="buy"
         />
       </Card>
     );
