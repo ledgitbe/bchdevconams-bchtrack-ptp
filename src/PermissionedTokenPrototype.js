@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Card, List } from 'antd';
+import { Input, Card, List, Transfer } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -32,6 +32,12 @@ class PermissionedTokenPrototype extends React.Component {
     mnemonic: null,
     logs: [],
     genesisTxId: null,
+    monitoredGenesis: [],
+    monitoredBlocks: [],
+    monitoredCoinbase: [],
+    monitoredSpends: [],
+    unvalidatedSpendsKeys: [],
+    validatedSpendsKeys: [],
   }
   monitorSocket = null;
 
@@ -78,17 +84,23 @@ class PermissionedTokenPrototype extends React.Component {
     console.log("Genesis State", this.state);
   }
 
+  addLogMessage(msg) {
+    this.setState({logs: [...this.state.logs, msg]});
+  }
+
   startMonitoring() {
     let query = {
       "v": 3,
       "q": {
-        "find": { "out.h1": "44debc0a" }
+        "find": { "out.h1": "44debc0a", "out.s3": this.state.tokenId }
       },
 
       "r": { "f": "." }
     };
 
     this.monitorSocket = BitSocket(query);
+
+    this.addLogMessage("Started monitoring for transactions for tokenId " + this.state.tokenId);
 
     this.monitorSocket.onmessage = (e) => {
       if (e.type === 'open') {
@@ -98,6 +110,23 @@ class PermissionedTokenPrototype extends React.Component {
       var obj = JSON.parse(e.data);
 
       if(obj.data && obj.data.length > 0 && obj.data[0].out && obj.data[0].out.length > 0) {
+        switch (obj.data.out[0].s4) {
+          case '0':
+            // Genesis
+            break;
+          case '1':
+            // Block
+            break;
+          case '2':
+            // Coinbase
+            break;
+          case '3':
+            // Spend
+            break;
+          default:
+            this.addLogMessage("Unknown transaction type detected");
+            break;
+          }
         console.log("Received block " + Buffer.from(obj.data[0].out[0].h4, 'hex') + " with id " + obj.data[0].tx.h);
         try {
           console.log('Coinbase transaction: ' + Buffer.from(obj.data[0].out[0].h6,'hex').toString());
@@ -142,6 +171,11 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   renderValidation() {
+    return (
+      <Card title="Validation">
+        <Transfer />
+      </Card>
+    );
   }
 
   renderSpend() {
