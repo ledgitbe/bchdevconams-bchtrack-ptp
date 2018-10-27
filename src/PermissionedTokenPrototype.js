@@ -1,12 +1,23 @@
 import React from 'react'
-import { Input } from 'antd';
+import { Input, Card } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
 
 const BITBOX = new BITBOXSDK();
+//
+//*  tokenid
+//*  ticker
+//*  name
+//*  coinbase address (issuance van nieuwe tokens)
+//*  initial supply
+//
+//funcing EC pair
+//funding address
+//toAddress
+//
 
-class Genesis extends React.Component {
+class PermissionedTokenPrototype extends React.Component {
   state = {
     tokenId: null,
     ticker: null,
@@ -22,7 +33,7 @@ class Genesis extends React.Component {
 
   componentWillMount() {
     this.bitsocket = BitSocket();
-    a.onmessage = function(e) {
+    this.bitsocket.onmessage = function(e) {
       console.log(e);
     }
     // generate entropy
@@ -64,26 +75,14 @@ class Genesis extends React.Component {
     this.bitsocket.close();
   }
 
-  //*  tokenid
-  //*  ticker
-  //*  name
-  //*  coinbase address (issuance van nieuwe tokens)
-  //*  initial supply
-  //
-  //funcing EC pair
-  //funding address
-  //toAddress
-  //
-  handleChange(e) {
+ handleChange(e) {
     this.setState({ [e.target.name] : e.target.value});
     console.log("Genesis State", this.state);
   }
 
-  render() {
-    console.log(this.state);
+  renderGenesis() {
     return (
-    <div>
-      <h1>Genesis</h1>
+      <Card title="Genesis">
       <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
       <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
       <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
@@ -94,10 +93,32 @@ class Genesis extends React.Component {
         amount="0.01"
         currency="EUR"
       />
-    </div>);
+    </Card>
+    );
+  }
+
+  renderValidation() {
+  }
+
+  renderSpend() {
+  }
+
+  renderMonitor() {
+  }
+
+  render() {
+    console.log(this.state);
+    return (
+      <div>
+        { this.renderGenesis() }
+        { this.renderValidation() }
+        { this.renderSpend() }
+        { this.renderMonitor() }
+      </div>
+   );
   }
 
 
 }
 
-export default Genesis;
+export default PermissionedTokenPrototype;
