@@ -3,6 +3,9 @@ import { Input, Card, List } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
+import ptpSdk from './ptp';
+
+const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
 //
@@ -30,6 +33,7 @@ class PermissionedTokenPrototype extends React.Component {
     toEcPair: null,
     mnemonic: null,
     logs: [],
+    genesisTxId: null,
   }
   monitorSocket = null;
 
@@ -124,15 +128,24 @@ class PermissionedTokenPrototype extends React.Component {
         <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
         <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
         <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
-        <Input onChange={this.handleChange.bind(this)} name="coinbaseAddr"  placeholder="coinbaseAddr" />
         <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
         <MoneyButton
           to={this.state.fundingAddress}
-          amount="0.01"
+          amount="0.05"
           currency="EUR"
+          onPayment={this.createGenesis.bind(this)}
         />
       </Card>
     );
+  }
+
+  async createGenesis() {
+    try {
+      ptp.createGenesis(this.state.tokenId, this.state.fundingAddress, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.fundingEcPair, this.state.toEcPair)
+    } catch (e) {
+      console.log(e);
+    }
+    return true;
   }
 
   renderValidation() {
