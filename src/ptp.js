@@ -6,7 +6,7 @@ var prefix = Buffer.from([0x53, 0x44, 0x50, 0x00]);
 if (test)
   prefix = Buffer.from([0x44, 0xDE, 0xBC, 0x0A]);
 
-const transactionTypes= {genesis: 0, block: 1, coinbase: 2, spend: 3};
+const transactionTypes= {genesis: '0', block: '1', coinbase: '2', spend: '3'};
 
 const ptp = function () {};
 
@@ -159,7 +159,7 @@ ptp.prototype.createBlock = async (tokenId, inputUtxos, outputAddress, height, c
   if(isGenesis) {
     scriptArray.push(transactionTypes["genesis"].toString());
   } else {
-    scriptArray.push(transactionTypes["genesis"].toString());
+    scriptArray.push(transactionTypes["block"].toString());
   }
   scriptArray.push(Buffer.from(tokenId.toString()));
   scriptArray.push(Buffer.from(height.toString()));
