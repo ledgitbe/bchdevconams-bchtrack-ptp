@@ -1,6 +1,8 @@
 import React from 'react'
 import { Input } from 'antd';
+import BITBOXSDK from from '../node_modules/bitbox-sdk/lib/bitbox-sdk';
 
+const BITBOX = new BITBOXSDK.default();
 class Generis extends React.Component {
   state = {
     tokenId: null,
@@ -8,8 +10,15 @@ class Generis extends React.Component {
     name: null,
     coinbaseAddr: null,
     initialSupply: null,
+    fundingAddress: null,
+    toAddress: null,
+    fundingEcPair: null,
+    toEcPair: null,
   }
 
+  componentWillMount() {
+    
+  }
   //*  tokenid
   //*  ticker
   //*  name
