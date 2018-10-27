@@ -46,7 +46,7 @@ class PermissionedTokenPrototype extends React.Component {
     toEcPair: null,
     mnemonic: null,
     logs: [],
-    genesisTxId: null,
+    lastBlockTxId: null,
     monitoredGenesis: [],
     monitoredBlocks: [],
     monitoredCoinbase: [],
@@ -191,13 +191,38 @@ class PermissionedTokenPrototype extends React.Component {
   async createGenesis() {
     this.startMonitoring();
     try {
-      ptp.createGenesis(this.state.tokenId, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.toEcPair)
+      let lastBlockTxId = await ptp.createGenesis(this.state.tokenId, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.toEcPair)
+      this.setState({lastBlockTxId});
     } catch (e) {
       console.log(e);
     }
     return true;
   }
 
+  async createBlock() {
+    let transactionsToValidate = this.state.targetKeys;
+
+    try {
+      let allUtxo = await BITBOX.Address.utxo(this.state.toAddress);
+      let blockUtxo = allUtxo.find(utxo => utxo.txid === this.state.lastBlockTxId);
+      if (blockUtxo) {
+      let lastBlockTxId = await ptp.createBlock(this.state.tokenId,
+        [blockUtxo],
+        this.state.toAddress,
+        0,
+        0,
+        transactionsToValidate,
+        this.state.toEcPair,
+        false);
+        this.setState({lastBlockTxId});
+      } else {
+        console.log('Utxo not found in createBlock()');
+        console.log(allUtxo);
+      }
+    } catch(e) {
+      console.log(e);
+    }
+  }
 
   handleTransferSelectChange(sourceSelectedKeys, targetSelectedKeys) {
     this.setState({ selectedKeys: [...sourceSelectedKeys, ...targetSelectedKeys] });
@@ -220,6 +245,7 @@ class PermissionedTokenPrototype extends React.Component {
           onSelectChange={this.handleTransferSelectChange.bind(this)}
           onChange={this.handleTransferChange.bind(this)}
         />
+        <Button onClick={this.createBlock.bind(this)}>Validate/Create block</Button>
       </Card>
     );
   }
@@ -239,6 +265,7 @@ class PermissionedTokenPrototype extends React.Component {
       console.log(utxo);
     }
   }
+
   renderSpend() {
     const SpendPopover = (props) => {
       return (
