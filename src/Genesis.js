@@ -1,8 +1,9 @@
 import React from 'react'
 import { Input } from 'antd';
-import BITBOXSDK from from '../node_modules/bitbox-sdk/lib/bitbox-sdk';
+import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 
-const BITBOX = new BITBOXSDK.default();
+const BITBOX = new BITBOXSDK();
+
 class Genesis extends React.Component {
   state = {
     tokenId: null,
