@@ -1,0 +1,5 @@
+ - set monitoring on/off without moneybutton and automatically enable with moneybutton
+ - spend outputs to specific addresses
+ - spend split outputs
+ - show wallet address
+ - parse/cleanup monitoring
