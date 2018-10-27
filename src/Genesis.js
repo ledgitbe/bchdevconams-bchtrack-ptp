@@ -2,6 +2,7 @@ import React from 'react'
 import { Input } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
+import BitSocket from './BitSocket';
 
 const BITBOX = new BITBOXSDK();
 
@@ -19,8 +20,16 @@ class Genesis extends React.Component {
   }
 
   componentWillMount() {
-    
+    this.bitsocket = BitSocket();
+    a.onmessage = function(e) {
+      console.log(e);
+    }
   }
+
+  componentWillUmount() {
+    this.bitsocket.close();
+  }
+
   //*  tokenid
   //*  ticker
   //*  name
@@ -39,6 +48,7 @@ class Genesis extends React.Component {
   render() {
     return (
     <div>
+      <h1>Genesis</h1>
       <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
       <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
       <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
