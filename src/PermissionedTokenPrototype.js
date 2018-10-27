@@ -54,6 +54,7 @@ class PermissionedTokenPrototype extends React.Component {
     selectedKeys: [],
     targetKeys: [],
     spentTransactionIds: [],
+    confirmedTransactionIds: [],
   }
   monitorSocket = null;
 
@@ -135,6 +136,11 @@ class PermissionedTokenPrototype extends React.Component {
           case '1':
             // Block
             this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
+            var index = 6;
+            while(obj.data[0].out[0][`s${index}`]) {
+              this.setState({ confirmedTransactionIds: [...this.state.confirmedTransactionIds, obj.data[0].out[0][`s${index}`]]});
+              index++;
+            }
             this.addLogMessage("Received block transaction");
             break;
           case '2':
@@ -239,7 +245,7 @@ class PermissionedTokenPrototype extends React.Component {
           titles={['Unvalidated', 'Validated']}
           targetKeys={this.state.targetKeys}
           selectedKeys={this.state.selectedKeys}
-          dataSource={this.state.monitoredSpends}
+          dataSource={this.state.monitoredSpends.filter(spend => this.state.confirmedTransactionIds.indexOf(spend.tx.h)===-1)}
           rowKey={record => record.tx.h}
           render={item => item.tx.h}
           onSelectChange={this.handleTransferSelectChange.bind(this)}
@@ -286,13 +292,22 @@ class PermissionedTokenPrototype extends React.Component {
           size="small"
           bordered
           dataSource={transactions.filter(item => { return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
-          renderItem={item => (
-            <List.Item>
+          renderItem={item => {
+            var cannotSpend = 
+              this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h) 
+              || 
+              (
+                !this.state.monitoredCoinbase.find(cbTx => cbTx.tx.h === item.tx.h) 
+                    &&
+                !this.state.confirmedTransactionIds.find(confTx => confTx === item.tx.h)
+              )
+                  
+            return (<List.Item>
               {item.out[0].s4} {this.state.ticker} received 
               <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
-                <Button disabled={this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h)}>Spend this output</Button>
+                <Button disabled={cannotSpend}>Spend this output</Button>
               </Popover>
-            </List.Item>)}
+            </List.Item>)}}
           />
         </Card>
     );
