@@ -25,53 +25,17 @@ const checkInputUtxos = async (inputUtxos) => {
 };
 
 
-ptp.prototype.createGenesis = async (tokenId, fundingAddress, toAddress, ticker, name, coinbaseAddress, initialSupply, fundingEcPair, toEcPair) => {
-  // spend inputUtxos to 2 utxo's (vout[0] = genesis tx, vout[1] = coinbase tx)
-  let transactionBuilder = new BITBOX.TransactionBuilder('bitcoincash');
-
-  let inputUtxos = await BITBOX.Address.utxo(fundingAddress);
-
-  while (!inputUtxos || inputUtxos.length < 1) {
-    console.log('waiting for input transaction');
-    sleep(5000);
-    inputUtxos = await BITBOX.Address.utxo(fundingAddress);
-  }
-
-  let satoshis = 0;
-  for (let i = 0; i < inputUtxos.length; i += 1) {
-    satoshis += inputUtxos[i].satoshis;
-    transactionBuilder.addInput(inputUtxos[i].txid, inputUtxos[i].vout);
-  }
-
-  const byteCount = BITBOX.BitcoinCash.getByteCount({ P2PKH: inputUtxos.length }, { P2PKH: 2 });
-  const outputAmount = Math.floor((satoshis - byteCount)/2);
-
-  // coinbase tx output
-  transactionBuilder.addOutput(toAddress, outputAmount);
-  // block tx output
-  transactionBuilder.addOutput(toAddress, outputAmount);
-
-  let redeemScript;
-  transactionBuilder.sign(
-    0
-    , fundingEcPair
-    , redeemScript
-    , transactionBuilder.hashTypes.SIGHASH_ALL
-    , satoshis,
-  );
-
-  const hex = transactionBuilder.build().toHex();
-  const inputTxId = await BITBOX.RawTransactions.sendRawTransaction(hex);
-
-  let coinbaseUtxo = null;
+ptp.prototype.createGenesis = async (tokenId, toAddress, ticker, name, coinbaseAddress, initialSupply, toEcPair) => {
+    let coinbaseUtxo = null;
   let blockUtxo = null;
 
   let retries = 0;
   while (!(coinbaseUtxo && blockUtxo) && retries < 5) {
+    console.log('awaiting incoming payment');
     await sleep(1000);
     let allUtxo = await BITBOX.Address.utxo(toAddress);
-    coinbaseUtxo = allUtxo.find(output => output.txid === inputTxId && output.vout == 0);
-    blockUtxo = allUtxo.find(output => output.txid === inputTxId && output.vout == 1);
+    coinbaseUtxo = allUtxo.find(output => output.vout == 0);
+    blockUtxo = allUtxo.find(output => output.vout == 1);
     retries++;
   }
 
@@ -104,9 +68,9 @@ ptp.prototype.createTransaction = async (tokenId, inputUtxos, isCoinbase, output
   let scriptArray = [BITBOX.Script.opcodes.OP_RETURN, prefix];
 
   if (isCoinbase) {
-    scriptArray.push(Buffer.from(transactionTypes['coinbase'].toString()));
+    scriptArray.push(Buffer.from(transactionTypes['coinbase']));
   } else {
-    scriptArray.push(Buffer.from(transactionTypes['spend'].toString()));
+    scriptArray.push(Buffer.from(transactionTypes['spend']));
   }
   
   scriptArray.push(Buffer.from(tokenId.toString()));
@@ -157,9 +121,9 @@ ptp.prototype.createBlock = async (tokenId, inputUtxos, outputAddress, height, c
   }
   let scriptArray = [BITBOX.Script.opcodes.OP_RETURN, prefix];
   if(isGenesis) {
-    scriptArray.push(transactionTypes["genesis"].toString());
+    scriptArray.push(Buffer.from(transactionTypes["genesis"]));
   } else {
-    scriptArray.push(transactionTypes["block"].toString());
+    scriptArray.push(Buffer.from(transactionTypes["block"]));
   }
   scriptArray.push(Buffer.from(tokenId.toString()));
   scriptArray.push(Buffer.from(height.toString()));

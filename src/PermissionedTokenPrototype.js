@@ -27,9 +27,7 @@ class PermissionedTokenPrototype extends React.Component {
     name: null,
     coinbaseAddress: null,
     initialSupply: null,
-    fundingAddress: null,
     toAddress: null,
-    fundingEcPair: null,
     toEcPair: null,
     mnemonic: null,
     logs: [],
@@ -53,12 +51,6 @@ class PermissionedTokenPrototype extends React.Component {
     let hdNode = BITBOX.HDNode.fromSeed(seedBuffer);
 
     // create child nodes for different purpusos
-    let fundingHdNode = BITBOX.HDNode.deriveHardened(hdNode, 0);
-    let fundingAddress = BITBOX.HDNode.toCashAddress(fundingHdNode);
-    let fundingEcPair = BITBOX.HDNode.toKeyPair(fundingHdNode);
-
-    this.setState({fundingEcPair});
-    this.setState({fundingAddress});
 
     let coinbaseHdNode = BITBOX.HDNode.deriveHardened(hdNode, 1);
     let coinbaseAddress = BITBOX.HDNode.toCashAddress(coinbaseHdNode);
@@ -130,9 +122,7 @@ class PermissionedTokenPrototype extends React.Component {
         <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
         <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
         <MoneyButton
-          to={this.state.fundingAddress}
-          amount="0.05"
-          currency="EUR"
+          outputs={[{address:this.state.toAddress,amount:0.05,currency:'EUR'},{address:this.state.toAddress,amount:0.03,currency:'EUR'}]}
           onPayment={this.createGenesis.bind(this)}
         />
       </Card>
@@ -141,7 +131,7 @@ class PermissionedTokenPrototype extends React.Component {
 
   async createGenesis() {
     try {
-      ptp.createGenesis(this.state.tokenId, this.state.fundingAddress, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.fundingEcPair, this.state.toEcPair)
+      ptp.createGenesis(this.state.tokenId, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.toEcPair)
     } catch (e) {
       console.log(e);
     }
