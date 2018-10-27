@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Card, List, Transfer } from 'antd';
+import { Input, Card, List, Transfer, Popover, Button } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -225,14 +225,24 @@ class PermissionedTokenPrototype extends React.Component {
   }
 
   renderSpend() {
-    console.log(this.state.monitoredCoinbase);
+    function SpendPopover(props) {
+      return (<div>{props.txid}</div>);
+    }
+
+    var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
     return (
       <Card title="Wallet">
         <List
           size="small"
           bordered
-          dataSource={this.state.monitoredCoinbase.filter(item => { return item.out && item.out.length>1 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
-          renderItem={item => (<List.Item>{JSON.stringify(item)}</List.Item>)}
+          dataSource={transactions.filter(item => { return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
+          renderItem={item => (
+            <List.Item>
+              {item.out[0].s4} {this.state.ticker} received 
+              <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
+                  <Button>Spend this output</Button>
+              </Popover>
+            </List.Item>)}
         />
       </Card>
     );
