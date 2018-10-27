@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Card, List, Transfer, Popover, Button } from 'antd';
+import { Input, Card, List, Transfer, Popover, Button, Row, Col } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -8,7 +8,12 @@ import ptpSdk from './ptp';
 const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
-//
+
+const styles = {
+  card: { wordBreak: 'break-all', margin: 8, boxShadow: '0px 7px 30px -16px rgba(0,0,0,0.65)' },
+};
+
+
 //*  tokenid
 //*  ticker
 //*  name
@@ -27,6 +32,7 @@ const BITBOX = new BITBOXSDK();
 //      };
 //
 //      content=<SpendComponent txId={2}  />
+
 
 class PermissionedTokenPrototype extends React.Component {
   state = {
@@ -171,7 +177,7 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderGenesis() {
     return (
-      <Card title="Genesis">
+      <Card style={styles.card} title="Genesis">
         <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
         <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
         <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
@@ -201,15 +207,11 @@ class PermissionedTokenPrototype extends React.Component {
 
   handleTransferChange(nextTargetKeys, direction, moveKeys) {
     this.setState({ targetKeys: nextTargetKeys });
-
-    console.log('targetKeys: ', nextTargetKeys);
-    console.log('direction: ', direction);
-    console.log('moveKeys: ', moveKeys);
   }
 
   renderValidation() {
     return (
-      <Card title="Validation">
+      <Card style={styles.card} title="Validation">
         <Transfer
           titles={['Unvalidated', 'Validated']}
           targetKeys={this.state.targetKeys}
@@ -231,7 +233,7 @@ class PermissionedTokenPrototype extends React.Component {
 
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
     return (
-      <Card title="Wallet">
+      <Card style={styles.card} title="Wallet">
         <List
           size="small"
           bordered
@@ -240,11 +242,11 @@ class PermissionedTokenPrototype extends React.Component {
             <List.Item>
               {item.out[0].s4} {this.state.ticker} received 
               <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
-                  <Button>Spend this output</Button>
+                <Button>Spend this output</Button>
               </Popover>
             </List.Item>)}
-        />
-      </Card>
+          />
+        </Card>
     );
 
   }
@@ -259,7 +261,7 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderMonitor() {
     return (
-      <Card title="Monitor">
+      <Card style={styles.card} title="Monitor">
         <List
           size="small"
           bordered
@@ -274,10 +276,14 @@ class PermissionedTokenPrototype extends React.Component {
     console.log(this.state);
     return (
       <div>
-        { this.renderGenesis() }
-        { this.renderValidation() }
-        { this.renderSpend() }
-        { this.renderMonitor() }
+        <Row>
+          <Col xs={24} sm={24} md={6}>{ this.renderGenesis() }</Col>
+          <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>
+          <Col xs={24} sm={24} md={6}>{ this.renderSpend() }</Col>
+        </Row>
+        <Row>
+          <Col xs={24}>{ this.renderMonitor() }</Col>
+        </Row>
       </div>
     );
   }
