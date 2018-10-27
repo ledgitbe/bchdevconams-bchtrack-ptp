@@ -78,15 +78,10 @@ class Genesis extends React.Component {
       <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
       <Input onChange={this.handleChange.bind(this)} name="coinbaseAddr"  placeholder="coinbaseAddr" />
       <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
-      <MoneyButton 
-        outputs={[
-          {
-            type: 'script',
-            script: 'OP_RETURN bla',
-            amount: 0.0000001,
-            currency: 'BCH'
-          }
-        ]}
+      <MoneyButton
+        to={this.state.fundingAddress}
+        amount="0.01"
+        currency="EUR"
       />
     </div>);
   }
