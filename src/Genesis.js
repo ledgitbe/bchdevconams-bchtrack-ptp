@@ -11,12 +11,13 @@ class Genesis extends React.Component {
     tokenId: null,
     ticker: null,
     name: null,
-    coinbaseAddr: null,
+    coinbaseAddress: null,
     initialSupply: null,
     fundingAddress: null,
     toAddress: null,
     fundingEcPair: null,
     toEcPair: null,
+    mnemonic: null,
   }
 
   componentWillMount() {
@@ -24,6 +25,39 @@ class Genesis extends React.Component {
     a.onmessage = function(e) {
       console.log(e);
     }
+    // generate entropy
+    let entropy = BITBOX.Crypto.randomBytes(32);
+
+    // create mnemonic from entropy
+    let mnemonic = BITBOX.Mnemonic.fromEntropy(entropy);
+
+    // set mnemonic in state
+    this.setState({mnemonic});
+
+    // create seed buffer from mnemonic
+    let seedBuffer = BITBOX.Mnemonic.toSeed(mnemonic);
+    // create HDNode from seed buffer
+    let hdNode = BITBOX.HDNode.fromSeed(seedBuffer);
+
+    // create child nodes for different purpusos
+    let fundingHdNode = BITBOX.HDNode.deriveHardened(hdNode, 0);
+    let fundingAddress = BITBOX.HDNode.toCashAddress(fundingHdNode);
+    let fundingEcPair = BITBOX.HDNode.toKeyPair(fundingHdNode);
+
+    this.setState({fundingEcPair});
+    this.setState({fundingAddress});
+    
+    let coinbaseHdNode = BITBOX.HDNode.deriveHardened(hdNode, 1);
+    let coinbaseAddress = BITBOX.HDNode.toCashAddress(coinbaseHdNode);
+
+    this.setState({coinbaseAddress});
+
+    let toHdNode = BITBOX.HDNode.deriveHardened(hdNode, 2);
+    let toAddress = BITBOX.HDNode.toCashAddress(toHdNode);
+    let toEcPair = BITBOX.HDNode.toKeyPair(toHdNode);
+    
+    this.setState({toEcPair});
+    this.setState({toAddress});
   }
 
   componentWillUmount() {
@@ -46,6 +80,7 @@ class Genesis extends React.Component {
   }
 
   render() {
+    console.log(this.state);
     return (
     <div>
       <h1>Genesis</h1>
@@ -54,15 +89,10 @@ class Genesis extends React.Component {
       <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
       <Input onChange={this.handleChange.bind(this)} name="coinbaseAddr"  placeholder="coinbaseAddr" />
       <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
-      <MoneyButton 
-        outputs={[
-          {
-            type: 'script',
-            script: 'OP_RETURN bla',
-            amount: 0.0000001,
-            currency: 'BCH'
-          }
-        ]}
+      <MoneyButton
+        to={this.state.fundingAddress}
+        amount="0.01"
+        currency="EUR"
       />
     </div>);
   }
