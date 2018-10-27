@@ -34,6 +34,7 @@ class PermissionedTokenPrototype extends React.Component {
     ticker: null,
     name: null,
     coinbaseAddress: null,
+    coinbaseEcPair: null,
     initialSupply: null,
     toAddress: null,
     toEcPair: null,
@@ -43,13 +44,7 @@ class PermissionedTokenPrototype extends React.Component {
     monitoredGenesis: [],
     monitoredBlocks: [],
     monitoredCoinbase: [],
-    monitoredSpends: [
-      {id: 1, text: 'one'},
-      {id: 2, text: 'two'},
-      {id: 3, text: 'three'},
-      {id: 4, text: 'four'},
-      {id: 5, text: 'five'},
-    ],
+    monitoredSpends: [],
     selectedKeys: [],
     targetKeys: [],
   }
@@ -74,8 +69,10 @@ class PermissionedTokenPrototype extends React.Component {
 
     let coinbaseHdNode = BITBOX.HDNode.deriveHardened(hdNode, 1);
     let coinbaseAddress = BITBOX.HDNode.toCashAddress(coinbaseHdNode);
+    let coinbaseEcPair = BITBOX.HDNode.toKeyPair(coinbaseHdNode);
 
     this.setState({coinbaseAddress});
+    this.setState({coinbaseEcPair});
 
     let toHdNode = BITBOX.HDNode.deriveHardened(hdNode, 2);
     let toAddress = BITBOX.HDNode.toCashAddress(toHdNode);
@@ -215,9 +212,9 @@ class PermissionedTokenPrototype extends React.Component {
           targetKeys={this.state.targetKeys}
           selectedKeys={this.state.selectedKeys}
           dataSource={this.state.monitoredSpends}
-          rowKey={record => record.id}
+          rowKey={record => record.tx.h}
           render={item => item.text}
-          onSelectChange={this.handleTransferSelectChange.bind(this)}unvalidatedSpendsKeys
+          onSelectChange={this.handleTransferSelectChange.bind(this)}
           onChange={this.handleTransferChange.bind(this)}
         />
       </Card>
@@ -226,7 +223,22 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderSpend() {
     function SpendPopover(props) {
-      return (<div>{props.txid}</div>);
+      return (
+        <div>
+          {props.txid} 
+          <Button onClick={async () => {
+            const utxo = await BITBOX.Address.utxo(props.coinbaseAddress);
+            const output = utxo.find(output => {return output.txid === props.txid});
+            if (output) {
+              ptp.createTransaction(props.tokenId, [output], false, [props.coinbaseAddress], [props.amount], props.coinbaseEcPair)
+            } else {
+              console.log('No output found with txid ' + props.txid);
+              console.log(utxo);
+            }
+          }}>
+          Spend entire output
+          </Button>
+        </div>);
     }
 
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
@@ -239,12 +251,12 @@ class PermissionedTokenPrototype extends React.Component {
           renderItem={item => (
             <List.Item>
               {item.out[0].s4} {this.state.ticker} received 
-              <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
-                  <Button>Spend this output</Button>
+              <Popover content={SpendPopover({txid:item.tx.h, amount:item.out[0].s4, tokenId: this.state.tokenId, coinbaseAddress: this.state.coinbaseAddress, coinbaseEcPair: this.state.coinbaseEcPair})} title="Spend Output" trigger="click">
+                <Button>Spend this output</Button>
               </Popover>
             </List.Item>)}
-        />
-      </Card>
+          />
+        </Card>
     );
 
   }
