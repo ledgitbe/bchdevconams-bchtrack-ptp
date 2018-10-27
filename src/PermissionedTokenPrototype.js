@@ -90,8 +90,11 @@ class PermissionedTokenPrototype extends React.Component {
 
     this.monitorSocket = BitSocket(query);
 
-
     this.monitorSocket.onmessage = (e) => {
+      if (e.type === 'open') {
+        return;
+      }
+
       var obj = JSON.parse(e.data);
 
       if(obj.data && obj.data.length > 0 && obj.data[0].out && obj.data[0].out.length > 0) {
