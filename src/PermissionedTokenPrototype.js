@@ -184,7 +184,7 @@ class PermissionedTokenPrototype extends React.Component {
         <List
           size="small"
           bordered
-          dataSource={this.state.logs.filter(item => { item = JSON.parsereturn item.data && item.data.out && item.data.out.length>1 && item.data.out[1].e && item.data.out[1].e.a && this.normalizeAddress(item.data.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
+          dataSource={this.state.logs.filter(item => { return item.data && item.data.out && item.data.out.length>1 && item.data.out[1].e && item.data.out[1].e.a && this.normalizeAddress(item.data.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)})}
           renderItem={item => (<List.Item>{item}</List.Item>)}
         />
       </Card>
