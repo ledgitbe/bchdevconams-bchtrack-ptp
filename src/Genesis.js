@@ -1,7 +1,7 @@
 import React from 'react'
 import { Input } from 'antd';
 
-class Generis extends React.Component {
+class Genesis extends React.Component {
   state = {
     tokenId: null,
     ticker: null,
@@ -26,14 +26,17 @@ class Generis extends React.Component {
   }
 
   render() {
+    return (
     <div>
-      <Input onChange={this.handleChange.bind(this)}  name="tokenId" />
-      <Input onChange={this.handleChange.bind(this)}  name="ticker" />
-      <Input onChange={this.handleChange.bind(this)}  name="name" />
-      <Input onChange={this.handleChange.bind(this)}  name="coinbaseAddr" />
-      <Input onChange={this.handleChange.bind(this)}  name="initialSupply" />
-    </div>
+      <Input onChange={this.handleChange.bind(this)} name="tokenId"       placeholder="tokenId" />
+      <Input onChange={this.handleChange.bind(this)} name="ticker"        placeholder="ticker" />
+      <Input onChange={this.handleChange.bind(this)} name="name"          placeholder="name" />
+      <Input onChange={this.handleChange.bind(this)} name="coinbaseAddr"  placeholder="coinbaseAddr" />
+      <Input onChange={this.handleChange.bind(this)} name="initialSupply" placeholder="initialSupply" />
+    </div>);
   }
 
 
 }
+
+export default Genesis;
