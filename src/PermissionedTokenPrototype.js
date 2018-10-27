@@ -210,15 +210,23 @@ class PermissionedTokenPrototype extends React.Component {
       let allUtxo = await BITBOX.Address.utxo(this.state.toAddress);
       let blockUtxo = allUtxo.find(utxo => utxo.txid === this.state.lastBlockTxId);
       if (blockUtxo) {
-      let lastBlockTxId = await ptp.createBlock(this.state.tokenId,
-        [blockUtxo],
-        this.state.toAddress,
-        0,
-        0,
-        this.state.transactionsToValidate,
-        this.state.toEcPair,
-        false);
-        this.setState({lastBlockTxId});
+        let lastBlockTxId = await ptp.createBlock(this.state.tokenId,
+          [blockUtxo],
+          this.state.toAddress,
+          0,
+          0,
+          this.state.transactionsToValidate,
+          this.state.toEcPair,
+          false
+        );
+        if (lastBlockTxId.startsWith('64:')) {
+          console.log(lastBlockTxId);
+          this.addLogMessage('Could not create block');
+
+        } else {
+          this.setState({lastBlockTxId});
+          this.setState({transactionsToValidate: []});
+        }
       } else {
         console.log(this.state.lastBlockTxId);
         console.log('Utxo not found in createBlock()');
@@ -327,7 +335,7 @@ class PermissionedTokenPrototype extends React.Component {
         <List
           size="small"
           bordered
-          dataSource={this.state.logs}
+          dataSource={this.state.logs.slice().reverse()}
           renderItem={item => (<List.Item>{item}</List.Item>)}
         />
       </Card>
