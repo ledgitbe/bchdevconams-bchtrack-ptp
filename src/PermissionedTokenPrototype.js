@@ -1,10 +1,11 @@
 import React from 'react'
-import { Input, Card, List, Transfer, Popover, Button, Row, Col } from 'antd';
+import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
 import ptpSdk from './ptp';
 
+const { Meta } = Card;
 const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
@@ -55,6 +56,7 @@ class PermissionedTokenPrototype extends React.Component {
     transactionsToValidate: [],
     spentTransactionIds: [],
     confirmedTransactionIds: [],
+    receiveAddress: null,
   }
   monitorSocket = null;
 
@@ -273,14 +275,14 @@ class PermissionedTokenPrototype extends React.Component {
     );
   }
 
-  async spendTransaction(txid) {
+  async spendTransaction(txid, receiveAddress) {
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
 
     var transaction = transactions.find(tx => tx.tx.h===txid);
     const utxo = await BITBOX.Address.utxo(this.state.coinbaseAddress);
     const output = utxo.find(output => {return output.txid === txid});
     if (output && transaction) {
-      ptp.createTransaction(this.state.tokenId, [output], false, [this.state.coinbaseAddress], [transaction.out[0].s4], this.state.coinbaseEcPair);
+      ptp.createTransaction(this.state.tokenId, [output], false, [receiveAddress], [transaction.out[0].s4], this.state.coinbaseEcPair);
       this.setState({ spentTransactionIds: [...this.state.spentTransactionIds, txid]});
       // disable button
     } else {
@@ -293,9 +295,11 @@ class PermissionedTokenPrototype extends React.Component {
     const SpendPopover = (props) => {
       return (
         <div>
-          {props.txid} 
+          {props.txid}
+          <Input onChange={this.handleChange.bind(this)} name="receiveAddress" placeholder="Recipient Address" />
+           
           <Button onClick={() => {
-            this.spendTransaction(props.txid);
+            this.spendTransaction(props.txid, this.state.receiveAddress);
           }}>
           Spend entire output
           </Button>
@@ -312,21 +316,21 @@ class PermissionedTokenPrototype extends React.Component {
             return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)
           })}
           renderItem={item => {
-            var cannotSpend = 
-              this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h) 
-              || 
-              (
-                !this.state.monitoredCoinbase.find(cbTx => cbTx.tx.h === item.tx.h) 
-                    &&
-                !this.state.confirmedTransactionIds.find(confTx => confTx === item.tx.h)
-              )
+            var unconfirmed = (!this.state.monitoredCoinbase.find(cbTx => cbTx.tx.h === item.tx.h) && !this.state.confirmedTransactionIds.find(confTx => confTx === item.tx.h));
+            var spent = this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h) ? true : false
+            var cannotSpend = spent || unconfirmed;
                   
             return (<List.Item>
-              {item.out[0].s4} {this.state.ticker} received 
+              {item.out[0].s4} {this.state.ticker} {unconfirmed && <Tag color='orange'>Unconfirmed</Tag>}{spent && <Tag color='red'>Spent</Tag>}  <br />
               <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
                 <Button disabled={cannotSpend}>Spend this output</Button>
               </Popover>
             </List.Item>)}}
+          />
+          <Divider />
+          <Meta
+            title="Address"
+            description={this.state.coinbaseAddress}
           />
         </Card>
     );
