@@ -1,5 +1,5 @@
 import React from 'react'
-import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag, Switch } from 'antd';
+import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag, Switch, Timeline } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -57,6 +57,7 @@ class PermissionedTokenPrototype extends React.Component {
     confirmedTransactionIds: [],
     receiveAddress: null,
     isMonitoring: false,
+    renderValidation: false,
   }
   monitorSocket = null;
 
@@ -207,7 +208,7 @@ class PermissionedTokenPrototype extends React.Component {
     this.startMonitoring();
     try {
       let lastBlockTxId = await ptp.createGenesis(this.state.tokenId, this.state.toAddress, this.state.ticker, this.state.name, this.state.coinbaseAddress, this.state.initialSupply, this.state.toEcPair)
-      this.setState({lastBlockTxId});
+      this.setState({lastBlockTxId, renderValidation: true});
     } catch (e) {
       console.log(e);
     }
@@ -356,12 +357,9 @@ class PermissionedTokenPrototype extends React.Component {
             }
           }} />}
         title="Monitor">
-        <List
-          size="small"
-          bordered
-          dataSource={this.state.logs.slice().reverse()}
-          renderItem={item => (<List.Item>{item}</List.Item>)}
-        />
+        <Timeline reverse={true} pending="...">
+          { this.state.logs.map(log => <Timeline.Item>{log}</Timeline.Item>) }
+        </Timeline>
       </Card>
     );
   }
@@ -372,7 +370,7 @@ class PermissionedTokenPrototype extends React.Component {
       <div>
         <Row>
           <Col xs={24} sm={24} md={6}>{ this.renderGenesis() }</Col>
-          <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>
+          { this.state.renderValidation && <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>}
           <Col xs={24} sm={24} md={6}>{ this.renderSpend() }</Col>
         </Row>
         <Row>
