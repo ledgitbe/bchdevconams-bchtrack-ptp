@@ -131,14 +131,12 @@ class PermissionedTokenPrototype extends React.Component {
           case '0':
             // Genesis
             this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data[0]]});
-            this.addLogMessage("Received genesis transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received genesis transaction: " + obj.data[0].tx.h);
             break;
           case '1':
             // Block
             this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
-            this.addLogMessage("Received block transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received block transaction: " + obj.data[0].tx.h);
 
             var index = 6;
             while(obj.data[0].out[0][`s${index}`]) {
@@ -150,17 +148,13 @@ class PermissionedTokenPrototype extends React.Component {
           case '2':
             // Coinbase
             this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data[0]]});
-            this.addLogMessage("Received coinbase transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received coinbase transaction" + obj.data[0].tx.h);
             this.addLogMessage("Added supply: " + obj.data[0].out[0].s4);
             break;
           case '3':
             // Spend
             this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
-            this.addLogMessage("Received spend transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
-            this.addLogMessage("Amount: " + obj.data[0].out[0].s4 + " " + this.state.ticker);
-            this.addLogMessage("To: " + obj.data[0].out[1].e.a);
+            this.addLogMessage(`Received spend transaction ${obj.data[0].tx.h}, Amount: ${obj.data[0].out[0].s4} ${this.state.ticker} To ${obj.data[0].out[1].e.a}`);
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
