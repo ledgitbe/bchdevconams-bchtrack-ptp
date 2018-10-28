@@ -1,5 +1,5 @@
 import React from 'react'
-import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag } from 'antd';
+import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag, Switch } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -13,7 +13,6 @@ const BITBOX = new BITBOXSDK();
 const styles = {
   card: { wordBreak: 'break-all', margin: 8, boxShadow: '0px 7px 30px -16px rgba(0,0,0,0.65)' },
 };
-
 
 //*  tokenid
 //*  ticker
@@ -57,6 +56,7 @@ class PermissionedTokenPrototype extends React.Component {
     spentTransactionIds: [],
     confirmedTransactionIds: [],
     receiveAddress: null,
+    isMonitoring: false,
   }
   monitorSocket = null;
 
@@ -117,6 +117,7 @@ class PermissionedTokenPrototype extends React.Component {
     };
 
     this.monitorSocket = BitSocket(query);
+    this.setState({isMonitoring: true});
 
     this.addLogMessage("Started monitoring for transactions for tokenId " + this.state.tokenId);
 
@@ -133,14 +134,12 @@ class PermissionedTokenPrototype extends React.Component {
           case '0':
             // Genesis
             this.setState({ monitoredGenesis: [...this.state.monitoredGenesis, obj.data[0]]});
-            this.addLogMessage("Received genesis transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received genesis transaction: " + obj.data[0].tx.h);
             break;
           case '1':
             // Block
             this.setState({ monitoredBlocks: [...this.state.monitoredBlocks, obj.data[0]]});
-            this.addLogMessage("Received block transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received block transaction: " + obj.data[0].tx.h);
 
             var index = 6;
             while(obj.data[0].out[0][`s${index}`]) {
@@ -152,17 +151,13 @@ class PermissionedTokenPrototype extends React.Component {
           case '2':
             // Coinbase
             this.setState({ monitoredCoinbase: [...this.state.monitoredCoinbase, obj.data[0]]});
-            this.addLogMessage("Received coinbase transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
+            this.addLogMessage("Received coinbase transaction" + obj.data[0].tx.h);
             this.addLogMessage("Added supply: " + obj.data[0].out[0].s4);
             break;
           case '3':
             // Spend
             this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
-            this.addLogMessage("Received spend transaction");
-            this.addLogMessage("Tx: " + obj.data[0].tx.h);
-            this.addLogMessage("Amount: " + obj.data[0].out[0].s4 + " " + this.state.ticker);
-            this.addLogMessage("To: " + obj.data[0].out[1].e.a);
+            this.addLogMessage(`Received spend transaction ${obj.data[0].tx.h}, Amount: ${obj.data[0].out[0].s4} ${this.state.ticker} To ${obj.data[0].out[1].e.a}`);
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
@@ -187,6 +182,8 @@ class PermissionedTokenPrototype extends React.Component {
   stopMonitoring() {
     if (this.monitorSocket) {
       this.monitorSocket.close();
+      this.setState({isMonitoring: false});
+      this.addLogMessage("Stopped monitoring");
     }
   }
 
@@ -347,7 +344,18 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderMonitor() {
     return (
-      <Card style={styles.card} title="Monitor">
+      <Card style={styles.card}
+        extra={<Switch 
+          checked={this.state.isMonitoring} 
+          disabled={!this.state.tokenId}
+          onChange={() => { 
+            if (this.state.isMonitoring) { 
+              this.stopMonitoring();
+            } else { 
+              this.startMonitoring();
+            }
+          }} />}
+        title="Monitor">
         <List
           size="small"
           bordered
