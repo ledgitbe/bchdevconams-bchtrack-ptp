@@ -5,7 +5,6 @@ WORKDIR /app
 ADD package.json ./
 RUN npm install
 COPY . .
-RUN GENERATE_SOURCEMAP=false npm run build
 
 EXPOSE 3000
 
