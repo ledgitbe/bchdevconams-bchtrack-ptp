@@ -16,6 +16,13 @@ Permission Token Prototype is an entry to the 2018 BCHDEVCON in Amsterdam. Perim
 - [React]
 - [Antd]
 
+# Deployment
+``` 
+git clone https://github.com/ledgitbe/bchdevconams-bchtrack-ptp.git
+npm install
+npm start
+```
+
 # Made by
 - [Ledgit]
 
