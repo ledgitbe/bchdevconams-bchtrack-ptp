@@ -1,11 +1,13 @@
 import React from 'react'
-import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag, Switch, Timeline } from 'antd';
+import { Divider, Input, Card, List, Transfer, Popover, Button, Row, Col, Tag, Switch, Timeline, Layout } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
 import ptpSdk from './ptp';
+import logo from './logo.png';
 
 const { Meta } = Card;
+const { Header, Content } = Layout;
 const ptp = new ptpSdk();
 
 const BITBOX = new BITBOXSDK();
@@ -368,14 +370,22 @@ class PermissionedTokenPrototype extends React.Component {
     console.log(this.state);
     return (
       <div>
-        <Row>
-          <Col xs={24} sm={24} md={6}>{ this.renderGenesis() }</Col>
-          { this.state.renderValidation && <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>}
-          <Col xs={24} sm={24} md={6}>{ this.renderSpend() }</Col>
-        </Row>
-        <Row>
-          <Col xs={24}>{ this.renderMonitor() }</Col>
-        </Row>
+        <Layout>
+          <Header style={{ textAlign: 'center' }}>
+              <img className="logo" src={logo} />
+              <h1 style={{ color: 'white' }}>Permissioned Token Prototype</h1>
+          </Header>
+          <Content>
+            <Row>
+              <Col xs={24} sm={24} md={6}>{ this.renderGenesis() }</Col>
+              { this.state.renderValidation && <Col xs={24} sm={24} md={12}>{ this.renderValidation() }</Col>}
+              <Col xs={24} sm={24} md={6}>{ this.renderSpend() }</Col>
+            </Row>
+            <Row>
+              <Col xs={24}>{ this.renderMonitor() }</Col>
+            </Row>
+          </Content>
+        </Layout>
       </div>
     );
   }
