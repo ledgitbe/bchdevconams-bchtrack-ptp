@@ -4,6 +4,7 @@ RUN apk add git
 RUN mkdir /app
 WORKDIR /app
 ADD package.json ./
+ADD .env ./
 RUN npm install
 COPY . .
 
