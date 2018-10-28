@@ -58,6 +58,7 @@ class PermissionedTokenPrototype extends React.Component {
     receiveAddress: null,
     isMonitoring: false,
     renderValidation: false,
+    spendAmount: null,
   }
   monitorSocket = null;
 
@@ -158,7 +159,10 @@ class PermissionedTokenPrototype extends React.Component {
           case '3':
             // Spend
             this.setState({ monitoredSpends: [...this.state.monitoredSpends, obj.data[0]]});
-            this.addLogMessage(`Received spend transaction ${obj.data[0].tx.h}, Amount: ${obj.data[0].out[0].s4} ${this.state.ticker} To ${obj.data[0].out[1].e.a}`);
+            for (var i = 1; i < obj.data[0].out.length; i++) {
+
+              this.addLogMessage(`Received spend transaction ${obj.data[0].tx.h}, Amount: ${obj.data[0].out[0][`s${i+3}`]} ${this.state.ticker} To ${obj.data[0].out[i].e.a}`);
+            }
             break;
           default:
             this.addLogMessage("Unknown transaction type detected");
@@ -273,14 +277,24 @@ class PermissionedTokenPrototype extends React.Component {
     );
   }
 
-  async spendTransaction(txid, receiveAddress) {
+  async spendTransaction(txid, receiveAddress, vout, amount) {
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
 
     var transaction = transactions.find(tx => tx.tx.h===txid);
     const utxo = await BITBOX.Address.utxo(this.state.coinbaseAddress);
-    const output = utxo.find(output => {return output.txid === txid});
+    const output = utxo.find(output => {return output.txid === txid && output.vout === vout});
     if (output && transaction) {
-      ptp.createTransaction(this.state.tokenId, [output], false, [receiveAddress], [transaction.out[0].s4], this.state.coinbaseEcPair);
+      var inputAmount = parseInt(transaction.out[0].s4);
+      var changeAmount = inputAmount - amount;
+      var recipients = [receiveAddress];
+      var amounts = [amount];
+
+      if (changeAmount > 0) {
+        recipients.push(this.state.coinbaseAddress);
+        amounts.push(changeAmount);
+      }
+
+      ptp.createTransaction(this.state.tokenId, [output], false, recipients, amounts, this.state.coinbaseEcPair);
       this.setState({ spentTransactionIds: [...this.state.spentTransactionIds, txid]});
       // disable button
     } else {
@@ -294,16 +308,17 @@ class PermissionedTokenPrototype extends React.Component {
       return (
         <div>
           {props.txid}
+          <Input onChange={this.handleChange.bind(this)} name="spendAmount" placeholder="Amount" />
           <Input onChange={this.handleChange.bind(this)} name="receiveAddress" placeholder="Recipient Address" />
-           
+
           <Button onClick={() => {
-            this.spendTransaction(props.txid, this.state.receiveAddress);
+            this.spendTransaction(props.txid, this.state.receiveAddress, props.vout, this.state.spendAmount);
           }}>
           Spend entire output
-          </Button>
-        </div>);
+        </Button>
+      </div>);
     }
-    
+
     var transactions = this.state.monitoredCoinbase.concat(this.state.monitoredSpends);
     return (
       <Card style={styles.card} title="Wallet">
@@ -311,19 +326,36 @@ class PermissionedTokenPrototype extends React.Component {
           size="small"
           bordered
           dataSource={transactions.filter(item => { 
-            return item.out && item.out.length>1 && item.out[0].s4 && item.out[1].e && item.out[1].e.a && this.normalizeAddress(item.out[1].e.a) === this.normalizeAddress(this.state.coinbaseAddress)
+            if (item.out && item.out.length>1 && item.out[0].s4) {
+              var isValid = false;
+              item.out.forEach(out => {
+                if (out.e && out.e.a && this.normalizeAddress(out.e.a) == this.normalizeAddress(this.state.coinbaseAddress)) {
+                  isValid = true;
+                }
+              });
+              return isValid;
+            } 
+            return false;
+            
           })}
           renderItem={item => {
             var unconfirmed = (!this.state.monitoredCoinbase.find(cbTx => cbTx.tx.h === item.tx.h) && !this.state.confirmedTransactionIds.find(confTx => confTx === item.tx.h));
             var spent = this.state.spentTransactionIds.find(spentTx => spentTx === item.tx.h) ? true : false
             var cannotSpend = spent || unconfirmed;
-                  
-            return (<List.Item>
-              {item.out[0].s4} {this.state.ticker} {unconfirmed && <Tag color='orange'>Unconfirmed</Tag>}{spent && <Tag color='red'>Spent</Tag>}  <br />
-              <Popover content={SpendPopover({txid:item.tx.h})} title="Spend Output" trigger="click">
-                <Button disabled={cannotSpend}>Spend this output</Button>
-              </Popover>
-            </List.Item>)}}
+
+            return (
+
+              <List.Item>
+                { item.out.filter((out,index)=>index>0 && this.normalizeAddress(out.e.a) === this.normalizeAddress(this.state.coinbaseAddress)).map((out,index) =>
+                  <div key={index}>
+                    {item.out[0][`s${out.i+3}`]} {this.state.ticker} {unconfirmed && <Tag color='orange'>Unconfirmed</Tag>}{spent && <Tag color='red'>Spent</Tag>}  <br />
+                    <Popover content={SpendPopover({txid:item.tx.h, vout: out.i})} title="Spend Output" trigger="click">
+                      <Button disabled={cannotSpend}>Spend this output</Button>
+                    </Popover>
+                  </div>
+                )}
+              </List.Item>
+            )}}
           />
           <Divider />
           <Meta
@@ -358,7 +390,7 @@ class PermissionedTokenPrototype extends React.Component {
           }} />}
         title="Monitor">
         <Timeline reverse={true} pending="...">
-          { this.state.logs.map(log => <Timeline.Item>{log}</Timeline.Item>) }
+          { this.state.logs.map((log, index) => <Timeline.Item key={index}>{log}</Timeline.Item>) }
         </Timeline>
       </Card>
     );
