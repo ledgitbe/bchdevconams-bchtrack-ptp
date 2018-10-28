@@ -125,7 +125,7 @@ class PermissionedTokenPrototype extends React.Component {
     this.addLogMessage("Started monitoring for transactions for tokenId " + this.state.tokenId);
 
     this.monitorSocket.onmessage = (e) => {
-      if (e.type === 'open') {
+      if (e.type === 'open' || e.type === 'block') {
         return;
       }
 
