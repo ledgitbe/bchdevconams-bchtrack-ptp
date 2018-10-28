@@ -3,4 +3,4 @@ services:
   ptp:
     build: .
     ports:
-      - 3000:4340
+      - 4340:3000
