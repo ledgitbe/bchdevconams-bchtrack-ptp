@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Card, List, Transfer, Popover, Button, Row, Col } from 'antd';
+import { Input, Card, List, Transfer, Popover, Button, Row, Col, Switch } from 'antd';
 import {default as BITBOXSDK} from 'bitbox-sdk/lib/bitbox-sdk';
 import MoneyButton from '@moneybutton/react-money-button'
 import BitSocket from './BitSocket';
@@ -12,7 +12,6 @@ const BITBOX = new BITBOXSDK();
 const styles = {
   card: { wordBreak: 'break-all', margin: 8, boxShadow: '0px 7px 30px -16px rgba(0,0,0,0.65)' },
 };
-
 
 //*  tokenid
 //*  ticker
@@ -55,6 +54,7 @@ class PermissionedTokenPrototype extends React.Component {
     transactionsToValidate: [],
     spentTransactionIds: [],
     confirmedTransactionIds: [],
+    isMonitoring: false,
   }
   monitorSocket = null;
 
@@ -115,6 +115,7 @@ class PermissionedTokenPrototype extends React.Component {
     };
 
     this.monitorSocket = BitSocket(query);
+    this.setState({isMonitoring: true});
 
     this.addLogMessage("Started monitoring for transactions for tokenId " + this.state.tokenId);
 
@@ -179,6 +180,8 @@ class PermissionedTokenPrototype extends React.Component {
   stopMonitoring() {
     if (this.monitorSocket) {
       this.monitorSocket.close();
+      this.setState({isMonitoring: false});
+      this.addLogMessage("Stopped monitoring");
     }
   }
 
@@ -337,7 +340,18 @@ class PermissionedTokenPrototype extends React.Component {
 
   renderMonitor() {
     return (
-      <Card style={styles.card} title="Monitor">
+      <Card style={styles.card}
+        extra={<Switch 
+          checked={this.state.isMonitoring} 
+          disabled={!this.state.tokenId}
+          onChange={() => { 
+            if (this.state.isMonitoring) { 
+              this.stopMonitoring();
+            } else { 
+              this.startMonitoring();
+            }
+          }} />}
+        title="Monitor">
         <List
           size="small"
           bordered
