@@ -23,6 +23,9 @@ npm install
 npm start
 ```
 
+Run with docker-compose
+``` docker-compose up ```
+
 # Made by
 - [Ledgit]
 
