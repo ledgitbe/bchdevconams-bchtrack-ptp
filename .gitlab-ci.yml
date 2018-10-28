@@ -1,0 +1,10 @@
+stages:
+    - deploy
+
+deploy:
+    stage: deploy
+    script:
+      - docker-compose build
+      - docker-compose down
+      - docker-compose up -d --force-recreate
+    when: manual
